@@ -1,0 +1,14 @@
+!.envrc
+
+proofs/thirdparty/gem5/**
+orchestrator.c
+build.c
+src/**
+
+!src/**/*.c
+!src/**/*.h
+
+src/**/*.mod.c
+!modules/**/.gitignore
+
+compile_commands.json

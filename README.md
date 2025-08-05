@@ -1,11 +1,13 @@
 # TEA checker
 
-To build
+### build
 ```bash
 cc -o build build.c && ./bulid -h
 ```
 
-Run tester
+All the needed dependencies are in the `flake.nix` file.
+
+### Run tester
 ```bash
 ./orchestrator -h
-```
+    ```

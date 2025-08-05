@@ -5,12 +5,6 @@
 #define IMPLEMENTATIONS
 #include "libs/lbstd.h"
 
-#define EACH_TARGET(X)                                                         \
-  X(TARGET_X86_64)                                                             \
-  X(TARGET_RISCV32)                                                            \
-  X(TARGET_NUM)
-
-typedef_enum(target_t, EACH_TARGET);
 int main(int argc, char *argv[]) {
   go_rebuild_urself(argc, argv);
   const char *program_name = argv[0];
@@ -90,8 +84,9 @@ int main(int argc, char *argv[]) {
                "./orchestrator'");
 
     if (!yes_flag) {
-      printf("This program will compile `orchestrator` to a SUID binary. Is it "
-             "okay? [y/N]: ");
+      plog(INFO,
+           "This program will compile `orchestrator` to a SUID binary. Is it "
+           "okay? [y/N]: ");
       char choice = getchar();
       if (choice != 'y') {
         exit(0);

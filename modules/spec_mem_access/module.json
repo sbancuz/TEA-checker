@@ -1,0 +1,5 @@
+{
+  "test_file" : "spec_mem_access_test",
+  "sources" : [],
+  "depends_on" : ["cache", "pht"]
+}

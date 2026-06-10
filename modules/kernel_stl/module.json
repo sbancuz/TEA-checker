@@ -1,0 +1,6 @@
+{
+  "test_file" : "kernel_stl_test",
+  "sources" : [],
+  "depends_on" : ["cache"],
+  "run_as_exe": true
+}

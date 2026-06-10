@@ -1,0 +1,3 @@
+[submodule "libs/jim"]
+	path = libs/jim
+	url = https://github.com/tsoding/jim.git

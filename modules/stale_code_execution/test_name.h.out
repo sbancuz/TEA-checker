@@ -1,0 +1,5 @@
+#ifndef _TEST_NAME
+#define _TEST_NAME
+#define TEST_NAME stale_code_execution
+#define TEST_NAME_STR "stale_code_execution"
+#endif // _TEST_NAME

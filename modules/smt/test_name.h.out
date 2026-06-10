@@ -1,0 +1,5 @@
+#ifndef _TEST_NAME
+#define _TEST_NAME
+#define TEST_NAME smt
+#define TEST_NAME_STR "smt"
+#endif // _TEST_NAME

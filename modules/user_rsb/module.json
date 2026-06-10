@@ -1,0 +1,6 @@
+{
+  "test_file" : "user_rsb_test",
+  "sources" : [],
+  "depends_on" : ["cache", "rsb"],
+  "run_as_exe" : true
+}

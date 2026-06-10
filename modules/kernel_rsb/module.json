@@ -1,0 +1,6 @@
+{
+  "test_file" : "kernel_rsb_test",
+  "sources" : [],
+  "depends_on" : ["cache", "rsb"],
+  "run_as_exe" : true
+}

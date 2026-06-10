@@ -21,7 +21,7 @@ void func(request_dependencies_t *args) {
     pages[num_pages][0] = 1;
   }
   ker_open();
-  for (usize working_set = 1, wk = 0; working_set <= MAX_PAGES;
+  for (usize working_set = 1, wk = 0; working_set < MAX_PAGES;
        working_set *= 2, wk++) {
     volatile u64 start, end, total = 0;
 

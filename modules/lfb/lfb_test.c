@@ -21,7 +21,7 @@ void func(request_dependencies_t *args) {
   RESULT->cache_hit_time = cache_r->cached_access_time;
 
   u8 *buf = alloc(LFB_TEST_VARIANTS_COUNT * PAGE_SIZE);
-  for (usize n = 1; n <= LFB_TEST_VARIANTS_COUNT; n++) {
+  for (usize n = 1; n < LFB_TEST_VARIANTS_COUNT; n++) {
     for (int iter = 0; iter < MEASURE_ITERS; iter++) {
       serialise();
       memory_barrier();

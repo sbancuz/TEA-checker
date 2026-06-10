@@ -18,13 +18,13 @@ AS_RESULT(process_stl_result_t);
 
 #ifdef TARGET_X86_64
 #ifdef MITIGATE
-#define test                                                                   \
+#define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "serialize;\n"                                                               \
   "mov %%rdx, (%0);\n"                                                         \
   "serialize;\n"
 #else
-#define test                                                                   \
+#define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "mov %%rdx, (%0);\n"
 #endif
@@ -32,7 +32,7 @@ AS_RESULT(process_stl_result_t);
 #define clobbers "rdx", "memory"
 #elif TARGET_RISCV
 #ifdef MITIGATE
-#define test                                                                   \
+#define stl_test                                                               \
   "lw t0, 0(%1)\n"                                                             \
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"                                                                  \
@@ -40,7 +40,7 @@ AS_RESULT(process_stl_result_t);
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"
 #else
-#define test                                                                   \
+#define stl_test                                                               \
   "lw t0, 0(%1)\n"                                                             \
   "sd t0, 0(%0)\n"
 #endif
@@ -86,7 +86,7 @@ void func(request_dependencies_t *args) {
 
     load(always_out_of_cache);
     if (take_branch[i]) {
-      __asm__ __volatile__(test
+      __asm__ __volatile__(stl_test
                            :
                            : "r"(shadow_page), // %0 = destination pointer
                              "r"(cache_line)   // %1 = source pointer

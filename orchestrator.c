@@ -1236,6 +1236,7 @@ void print_help(const char *program_name, int exit_code) {
          "\t--target/-t\t\tGive the architeture to compile to (" str_fmt ")\n"
          "\t--runner/-r\t\tRunner for the test (" str_fmt ")\n"
          "\t--clock-speed/-c\t\tClock speed of the CPU\n"
+         "\t--kernel-headers/-k\t\tKernel headers directory\n"
          "\t--mitigate/-m\t\tRemove feature detection\n"
          "\t--save/-s\t\tSave run\n"
          "\t--help/-h\t\tPrint this help\n",
@@ -1396,11 +1397,12 @@ void parse_options(int argc, char *argv[], run_options_t *opts) {
 
   int opt;
   while ((opt = getopt_long(
-              argc, argv, "+n:t:r:c:hm:s::",
+              argc, argv, "+n:t:r:c:hm:s::k:",
               (struct option[]){{"new", required_argument, 0, 'n'},
                                 {"target", required_argument, 0, 't'},
                                 {"runner", required_argument, 0, 'r'},
                                 {"clock-speed", required_argument, 0, 'c'},
+                                {"kernel-headers", required_argument, 0, 'k'},
                                 {"mitigate", required_argument, 0, 'm'},
                                 {"save", optional_argument, 0, 's'},
                                 {"help", no_argument, 0, 'h'},
@@ -1455,6 +1457,10 @@ void parse_options(int argc, char *argv[], run_options_t *opts) {
 
     case 'c':
       opts->clock_speed = strtoul(optarg, NULL, 10);
+      break;
+
+    case 'k':
+      kernel_header_dir = strdup(optarg);
       break;
 
     case 'h':
@@ -1524,37 +1530,53 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  const char *kernel_header_location = "/usr/src/kernels";
-  paths_t paths = {0};
-  usize count = 0;
+  if (kernel_header_dir == NULL) {
+    const char *locations[] = {"/usr/src/kernels", "/usr/src", NULL};
+    bool found = false;
 
-  read_dir(kernel_header_location, &paths);
+    for (int loc = 0; locations[loc] != NULL; loc++) {
+      paths_t paths = {0};
+      if (!read_dir(locations[loc], &paths))
+        continue;
 
-  for (int i = 0; i < (int)paths.count; i++) {
-    const char *path = paths.items[i];
+      paths_t valid = {0};
+      for (int i = 0; i < (int)paths.count; i++) {
+        const char *path = paths.items[i];
+        if (path[0] == '.')
+          continue;
+        if (loc == 1 && strncmp(path, "linux-headers-", 14) != 0)
+          continue;
+        da_append(&valid, path);
+      }
 
-    if (path[0] == '.')
-      continue;
+      if (valid.count > 0) {
+        int choice = 0;
+        if (valid.count > 1) {
+          plog(INFO, "Multiple kernel headers found in %s:", locations[loc]);
+          for (int i = 0; i < (int)valid.count; i++)
+            plog(INFO, "  [%d] %s", i, valid.items[i]);
+          printf("Select kernel headers [0-%d]: ", (int)valid.count - 1);
+          char buf[64];
+          if (fgets(buf, sizeof(buf), stdin))
+            choice = atoi(buf);
+          if (choice < 0 || choice >= (int)valid.count)
+            choice = 0;
+        }
+        kernel_header_dir = tsprintf("%s/%s", locations[loc], valid.items[choice]);
+        found = true;
+      }
 
-    count++;
+      da_free(&paths);
+      da_free(&valid);
+      if (found)
+        break;
+    }
+
+    if (!found) {
+      plog(ERR, "No valid kernel headers found in /usr/src/kernels or /usr/src");
+      return 1;
+    }
   }
-
-  if (count == 0) {
-    plog(ERR, "No valid kernel headers provided in %s", kernel_header_location);
-  }
-
-  // Select the first one
-  // TODO: Fix this, or at least ask when there are multiple
-  for (int i = 0; i < (int)paths.count; i++) {
-    const char *path = paths.items[i];
-
-    if (path[0] == '.')
-      continue;
-
-    kernel_header_dir = tsprintf("%s/%s", kernel_header_location, path);
-  }
-
-  da_free(&paths);
 
   if (opts.runner == RUNNER_USER) {
     struct sched_param param;

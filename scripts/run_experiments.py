@@ -49,19 +49,22 @@ ATTACKS = {
 }
 
 
-def build_shell_cmd(name, modules, target, runner, cycles, saved_dir):
+def build_shell_cmd(name, modules, target, runner, cycles, saved_dir,
+                     kernel_headers=None):
     module_string = ",".join(sorted(set(modules)))
+    kh_flag = f" -k {kernel_headers}" if kernel_headers else ""
     orch_cmd = (
-        f"{ORCH} -t {target} -r {runner} -c {cycles} "
-        f"-m {module_string} -s{saved_dir}/{name} all"
+        f"{ORCH} -t {target} -r {runner} -c {cycles}"
+        f"{kh_flag} -m {module_string} -s{saved_dir}/{name} all"
     )
     return f"pushd .. > /dev/null\n{orch_cmd}\npopd > /dev/null"
 
 
-def build_all_cmd(target, runner, cycles, saved_dir):
+def build_all_cmd(target, runner, cycles, saved_dir, kernel_headers=None):
+    kh_flag = f" -k {kernel_headers}" if kernel_headers else ""
     orch_cmd = (
-        f"{ORCH} -t {target} -r {runner} -c {cycles} "
-        f"-s{saved_dir}/all all"
+        f"{ORCH} -t {target} -r {runner} -c {cycles}"
+        f"{kh_flag} -s{saved_dir}/all all"
     )
     return f"pushd .. > /dev/null\n{orch_cmd}\npopd > /dev/null"
 
@@ -168,21 +171,23 @@ def run_runner(target, runner, cycles, saved_dir, args):
     runner_dir = os.path.join(saved_dir, runner_label)
     os.makedirs(runner_dir, exist_ok=True)
 
+    kh = args.kernel_headers
+
     if run_all:
         print(f"\n### ALL MODULES ({runner_label}) ###\n")
-        cmd = build_all_cmd(target, runner, cycles, runner_dir)
+        cmd = build_all_cmd(target, runner, cycles, runner_dir, kh)
         run_cmd(cmd, args.dry)
 
     if run_features:
         print(f"\n### FEATURE RUNS ({runner_label}) ###\n")
         for f in FEATURES:
-            cmd = build_shell_cmd(f, [f], target, runner, cycles, runner_dir)
+            cmd = build_shell_cmd(f, [f], target, runner, cycles, runner_dir, kh)
             run_cmd(cmd, args.dry)
 
     if run_attacks:
         print(f"\n### ATTACK RUNS ({runner_label}) ###\n")
         for name, mods in ATTACKS.items():
-            cmd = build_shell_cmd(name, mods, target, runner, cycles, runner_dir)
+            cmd = build_shell_cmd(name, mods, target, runner, cycles, runner_dir, kh)
             run_cmd(cmd, args.dry)
 
     if not args.no_analyze and not args.dry:
@@ -200,6 +205,8 @@ def main():
                         help="Runner type (RUNNER_USER or RUNNER_KERNEL)")
     parser.add_argument("-c", "--cycles", default=DEFAULT_CYCLES,
                         help="Cycle count")
+    parser.add_argument("-k", "--kernel-headers",
+                        help="Kernel headers directory")
     parser.add_argument("--saved-dir", default="saved",
                         help="Directory to save results (created if missing)")
     parser.add_argument("--dry", action="store_true", help="Print only")
@@ -229,14 +236,14 @@ def main():
     if not args.no_spectre_checker:
         run_spectre_checker(saved_dir, args.dry)
 
-    # if args.run_both:
-    #     for runner in ("RUNNER_USER", "RUNNER_KERNEL"):
-    #         print(f"\n{'='*60}")
-    #         print(f"RUNNER: {runner}")
-    #         print(f"{'='*60}")
-    #         run_runner(args.target, runner, args.cycles, saved_dir, args)
-    # else:
-    #     run_runner(args.target, args.runner, args.cycles, saved_dir, args)
+    if args.run_both:
+        for runner in ("RUNNER_USER", "RUNNER_KERNEL"):
+            print(f"\n{'='*60}")
+            print(f"RUNNER: {runner}")
+            print(f"{'='*60}")
+            run_runner(args.target, runner, args.cycles, saved_dir, args)
+    else:
+        run_runner(args.target, args.runner, args.cycles, saved_dir, args)
 
 
 if __name__ == "__main__":

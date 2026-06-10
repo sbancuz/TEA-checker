@@ -460,7 +460,8 @@ const char *make_shared_lib(cmd_t *c, const char *name, int n, bool mitigate,
 
   // TODO: Maybe include also the modules?
   cmd_append(c, __BEAR "gcc", SILENCE_WARNINGS, "-g3", "-shared", "-fno-plt",
-             "-O0", "-march=native", tsprintf("-I%s", include_dir), "-o", out);
+             "-O0", "-fPIC", "-march=native", tsprintf("-I%s", include_dir),
+             "-o", out);
 
   if (mitigate) {
     cmd_append(c, "-DMITIGATE");
@@ -1562,7 +1563,8 @@ int main(int argc, char *argv[]) {
           if (choice < 0 || choice >= (int)valid.count)
             choice = 0;
         }
-        kernel_header_dir = tsprintf("%s/%s", locations[loc], valid.items[choice]);
+        kernel_header_dir =
+            tsprintf("%s/%s", locations[loc], valid.items[choice]);
         found = true;
       }
 
@@ -1573,7 +1575,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (!found) {
-      plog(ERR, "No valid kernel headers found in /usr/src/kernels or /usr/src");
+      plog(ERR,
+           "No valid kernel headers found in /usr/src/kernels or /usr/src");
       return 1;
     }
   }

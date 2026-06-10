@@ -46,7 +46,7 @@ void boot_hart0_main(void) {
   __deinit_alloc();
 }
 
-int main() {
+int main(void) {
   // On single-core, NUM_HARTS == 1
   // On multi-core, hart 0 will call boot_hart0_main(), others boot_other_hart()
   usize h = mhartid();

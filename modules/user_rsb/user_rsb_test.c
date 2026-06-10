@@ -17,14 +17,14 @@ s32 *take_branch CACHE_LINE_ALIGNED;
 s32 idx;
 #define TRAINING_LOOPS 1000
 
-no_inline void victim() { return; }
-no_inline void load_ptr() {
+no_inline void victim(void) { return; }
+no_inline void load_ptr(void) {
   if (take_branch[idx]) {
     load(cache_line);
   }
 }
 
-no_inline void rsb_safe_target() { read_memory_barrier(); }
+no_inline void rsb_safe_target(void) { read_memory_barrier(); }
 
 no_inline void rsb_stuff(int depth) {
   if (depth <= 0) {

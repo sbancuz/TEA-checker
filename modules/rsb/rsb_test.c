@@ -11,9 +11,8 @@ AS_RESULT(rsb_result_t);
 volatile int sink = 0;
 volatile int sink2 = 0;
 #define ITERATIONS 5000
-/* #define ITERATIONS 50000 */
 
-no_inline void target_function() {
+no_inline void target_function(void) {
   volatile int sum = 0;
   for (int i = 0; i < 100; i++)
     sum += i;
@@ -26,7 +25,7 @@ no_inline void rsb_poison(int depth) {
   rsb_poison(depth - 1);
 }
 
-no_inline void rsb_safe_target() { read_memory_barrier(); }
+no_inline void rsb_safe_target(void) { read_memory_barrier(); }
 
 no_inline void rsb_stuff(int depth) {
   if (depth <= 0) {
@@ -37,7 +36,7 @@ no_inline void rsb_stuff(int depth) {
   rsb_stuff(depth - 1);
 }
 
-usize measure_call(void (*func)()) {
+usize measure_call(void (*func)(void)) {
   unsigned int aux;
 
 #ifdef MITIGATE

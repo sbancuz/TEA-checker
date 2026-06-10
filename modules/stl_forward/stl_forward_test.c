@@ -11,13 +11,13 @@ AS_RESULT(stl_forward_result_t);
 
 #ifdef TARGET_X86_64
 #ifdef MITIGATE
-#define test                                                                   \
+#define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "serialize;\n"                                                               \
   "mov %%rdx, (%0);\n"                                                         \
   "serialize;\n"
 #else
-#define test                                                                   \
+#define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "mov %%rdx, (%0);\n"
 #endif
@@ -25,7 +25,7 @@ AS_RESULT(stl_forward_result_t);
 #define clobbers "rdx", "memory"
 #elif TARGET_RISCV
 #ifdef MITIGATE
-#define test                                                                   \
+#define stl_test                                                               \
   "lw t0, 0(%1)\n"                                                             \
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"                                                                  \
@@ -33,7 +33,7 @@ AS_RESULT(stl_forward_result_t);
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"
 #else
-#define test                                                                   \
+#define stl_test                                                               \
   "lw t0, 0(%1)\n"                                                             \
   "sd t0, 0(%0)\n"
 #endif
@@ -41,7 +41,7 @@ AS_RESULT(stl_forward_result_t);
 #define clobbers "t0", "memory"
 #endif
 
-#define test10 test test test test test test test test test test
+#define stl_test10 stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test
 
 void func(request_dependencies_t *args) {
   char *p = (char *)alloc(4096); // TODO: Swap with page size
@@ -60,7 +60,7 @@ void func(request_dependencies_t *args) {
 
         volatile u64 start = get_cycle();
         __asm__ __volatile__(
-            test10
+            stl_test10
             :
             : "r"((unsigned long long *)(p_align + o2)), // %0 (dest, 8-byte)
               "r"((unsigned *)(p_align + o1))            // %1 (src, 4-byte)

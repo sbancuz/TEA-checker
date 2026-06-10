@@ -30,7 +30,7 @@ void (*targets[8])(void) = {
     target_5, target_6, target_7, target_8,
 };
 
-void indirect_call(volatile void (*fp)()) { fp(); }
+void indirect_call(volatile void (*fp)(void)) { fp(); }
 
 #ifdef MITIGATE
 #define mcall indirect_call(targets[get_rand() % 8]);

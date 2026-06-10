@@ -221,31 +221,31 @@ void tlb_flush_page(volatile char *page) {
 
 bool mem_protect(void *ptr, usize len, int prot) { return true; }
 
-volatile usize *ptr = NULL;
+volatile usize *____ptr = NULL;
 
 void ker_open() {};
 void ker_close() {};
 
-usize *get_kernel_ptr(void) { return ptr; }
+usize *get_kernel_ptr(void) { return ____ptr; }
 usize get_kernel_time(void) {
   ktime_t start, end;
   start = __builtin_ia32_rdtsc();
-  load(ptr);
+  load(____ptr);
 
   rmb();
   end = __builtin_ia32_rdtsc();
   return end - start;
 }
 
-void kernel_ptr_cache_flush(void) { cache_line_flush(ptr); }
+void kernel_ptr_cache_flush(void) { cache_line_flush(____ptr); }
 
 void kernel_ptr_cache(void) {
-  load(ptr);
-  load(ptr);
-  load(ptr);
-  load(ptr);
-  load(ptr);
-  load(ptr);
+  load(____ptr);
+  load(____ptr);
+  load(____ptr);
+  load(____ptr);
+  load(____ptr);
+  load(____ptr);
 }
 
 #else

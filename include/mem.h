@@ -17,8 +17,8 @@ void *alloc(usize);
 bool mem_protect(void *, usize, int);
 usize *get_kernel_ptr(void);
 usize get_kernel_time(void);
-void *kernel_ptr_cache_flush(void);
-void *kernel_ptr_cache(void);
+void kernel_ptr_cache_flush(void);
+void kernel_ptr_cache(void);
 void ker_open(void);
 void ker_close(void);
 void pte_clear_noflush(volatile char *page);
@@ -237,9 +237,9 @@ usize get_kernel_time(void) {
   return end - start;
 }
 
-void *kernel_ptr_cache_flush(void) { cache_line_flush(ptr); }
+void kernel_ptr_cache_flush(void) { cache_line_flush(ptr); }
 
-void *kernel_ptr_cache(void) {
+void kernel_ptr_cache(void) {
   load(ptr);
   load(ptr);
   load(ptr);
@@ -368,20 +368,20 @@ usize get_kernel_time(void) {
   return time;
 }
 
-void *kernel_ptr_cache(void) {
+void kernel_ptr_cache(void) {
   struct probe_request req = {0};
   int ret = ioctl(fd_kernel, PROBE_CACHE, &req);
   if (ret < 0) {
     perror("Failed to open ioclt");
-    return NULL;
+    return;
   }
 }
 
-void *kernel_ptr_cache_flush(void) {
+void kernel_ptr_cache_flush(void) {
   int ret = ioctl(fd_kernel, PROBE_UNCACHE, NULL);
   if (ret < 0) {
     perror("Failed to open ioclt");
-    return NULL;
+    return;
   }
 }
 

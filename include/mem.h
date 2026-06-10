@@ -223,8 +223,8 @@ bool mem_protect(void *ptr, usize len, int prot) { return true; }
 
 volatile usize *____ptr = NULL;
 
-void ker_open() {};
-void ker_close() {};
+void ker_open() { ____ptr = kmalloc(sizeof(usize), GFP_KERNEL); };
+void ker_close() { kfree((void *)____ptr); };
 
 usize *get_kernel_ptr(void) { return ____ptr; }
 usize get_kernel_time(void) {

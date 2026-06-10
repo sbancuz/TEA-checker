@@ -14,7 +14,7 @@ AS_RESULT(kernel_misprediction_result_t);
 #define CACHE_LINE_SZ 4096
 #define CACHE_LINE_ALIGNED __attribute__((aligned(CACHE_LINE_SZ)))
 #define CACHE_LINE_ALIGNED_PTR __attribute__((aligned(CACHE_LINE_SZ)))
-#include <stdio.h>
+
 void func(request_dependencies_t *args) {
   cache_result_t *cache_r = args[1];
 
@@ -22,8 +22,6 @@ void func(request_dependencies_t *args) {
 
   RESULT->overhead = cache_r->overhead;
   RESULT->uncached_access_time = cache_r->uncached_access_time;
-  printf("%f %f\n", RESULT->uncached_access_time,
-         cache_r->uncached_access_time);
 
   int *take_branch CACHE_LINE_ALIGNED = alloc(tries * sizeof(u64));
 
@@ -46,7 +44,8 @@ void func(request_dependencies_t *args) {
   u64 sum = 0;
   ker_open();
   volatile usize CACHE_LINE_ALIGNED *kernel_cache_line = get_kernel_ptr();
-  volatile usize *user_cache_line = (volatile usize *)alloc(CACHE_LINE_SZ * sizeof(usize));
+  volatile usize *user_cache_line =
+      (volatile usize *)alloc(CACHE_LINE_SZ * sizeof(usize));
 
   volatile usize *ptr = user_cache_line;
 

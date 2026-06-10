@@ -13,17 +13,17 @@ AS_RESULT(kernel_bti_result_t);
 volatile u8 CACHE_LINE_ALIGNED safe_ptr[CACHE_LINE_SZ] = {1};
 volatile u8 *ptr = safe_ptr;
 
-no_inline CACHE_LINE_ALIGNED void target_A() { load(ptr); }
-no_inline CACHE_LINE_ALIGNED void target_B() { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_A(void) { load(ptr); }
+no_inline CACHE_LINE_ALIGNED void target_B(void) { nop(); }
 
-no_inline CACHE_LINE_ALIGNED void target_1() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_2() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_3() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_4() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_5() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_6() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_7() { nop(); }
-no_inline CACHE_LINE_ALIGNED void target_8() { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_1(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_2(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_3(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_4(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_5(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_6(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_7(void) { nop(); }
+no_inline CACHE_LINE_ALIGNED void target_8(void) { nop(); }
 
 void (*targets[8])(void) = {
     target_1, target_2, target_3, target_4,
@@ -37,8 +37,6 @@ void indirect_call(volatile void (*fp)()) { fp(); }
 #else
 #define mcall
 #endif
-
-#include <stdio.h>
 
 void func(request_dependencies_t *args) {
   cache_result_t *cache_r = args[1];

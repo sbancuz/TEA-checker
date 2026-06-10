@@ -9,7 +9,6 @@
 #include "types.h"
 
 AS_RESULT(smt_result_t);
-#include <stdio.h>
 
 typedef struct {
   usize result;

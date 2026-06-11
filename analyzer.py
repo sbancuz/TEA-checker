@@ -18,6 +18,9 @@ import argparse
 from pprint import *
 from math import prod
 
+def clamp(value, lo=0.0, hi=1.0):
+    return max(lo, min(hi, value))
+
 C_TYPE_MAP = {
     "double": ctypes.c_double,
     "float": ctypes.c_float,
@@ -646,7 +649,7 @@ class Attack:
         for m in self.multipliers.values():
             mult *= m
 
-        self.severity = base_value * mult
+        self.severity = clamp(base_value * mult)
         return self
 
     def breakdown_str(self):
@@ -654,7 +657,7 @@ class Attack:
 
         for k, d in self.features.items():
             if d["present"]:
-                parts.append(f"{k}:{d['value']*100:.1f}%")
+                parts.append(f"{k}:{clamp(d['value'])*100:.1f}%")
             else:
                 parts.append(f"{k}:OFF")
 
@@ -932,8 +935,15 @@ def process_run(run_file, plot=None, pp=None, export=False):
                           Test.KERNEL_STALE_CODE, Test.KERNEL_STL,
                           Test.KERNEL_MISPREDICTION, Test.KERNEL_RSB,
                           Test.KERNEL_BTI, Test.KERNEL_LAP]
-    mprotected_access_ok = any(get_test(t).ok() for t in user_break_tests if t in tests)
-    kernel_access_ok = any(get_test(t).ok() for t in kernel_break_tests if t in tests)
+    process_break_tests = [Test.PROCESS_LFB, Test.PROCESS_O3,
+                           Test.PROCESS_STALE_CODE, Test.PROCESS_STL,
+                           Test.PROCESS_MISPREDICTION, Test.PROCESS_RSB,
+                           Test.PROCESS_BTI, Test.PROCESS_LAP]
+    user_boundary_ok = any(get_test(t).ok() for t in user_break_tests if t in tests)
+    kernel_boundary_ok = any(get_test(t).ok() for t in kernel_break_tests if t in tests)
+    process_boundary_ok = any(get_test(t).ok() for t in process_break_tests if t in tests)
+    mprotected_access_ok = process_boundary_ok and user_boundary_ok
+    kernel_access_ok = kernel_boundary_ok and user_boundary_ok and process_boundary_ok
 
     vulnerability = 0
     severity = 0
@@ -964,7 +974,7 @@ def process_run(run_file, plot=None, pp=None, export=False):
     # reverse engineering of other processors.
     # TODO: Find a better way to measure this
     max_lfb_size = 25
-    lfb_severity = lfb.lfb_size / max_lfb_size if max_lfb_size > 0 else 0
+    lfb_severity = clamp(lfb.lfb_size / max_lfb_size) if max_lfb_size > 0 else 0
     smt_severity = smt.ok()
 
     # TODO: Use latencies
@@ -1008,11 +1018,11 @@ def process_run(run_file, plot=None, pp=None, export=False):
 
     spec_window_severity = 0
     if spec_mem_access.ok() and rob.ok() and rob_size > 0:
-        spec_window_severity = spec_mem_access.window_size / (rob_size)
+        spec_window_severity = clamp(spec_mem_access.window_size / rob_size)
 
     ooo_window_severity = 0
     if ooo_mem_access.ok() and rob.ok() and rob_size > 0:
-        ooo_window_severity = ooo_window / (rob_size)
+        ooo_window_severity = clamp(ooo_window / rob_size)
 
     bti_window_severity = 0
     if btb.ok() and rob.ok() and rob_size > 0:
@@ -1060,7 +1070,7 @@ def process_run(run_file, plot=None, pp=None, export=False):
     severities[Test.OVERALL] = Severity(compute_overall(severities), "Agregated Processor vulnerability")
 
     for name, value in severities.items():
-        print(f"{name:20s}: {value.value*100:.2f}%")
+        print(f"{name:20s}: {clamp(value.value)*100:.2f}%")
 
     ################
     # ATTACK STUDY #
@@ -1328,8 +1338,8 @@ def process_run(run_file, plot=None, pp=None, export=False):
         } else 1
 
         return (
-            a.v / max_vuln,
-            (a.severity * mult) / max_vuln
+            clamp(a.v / max_vuln),
+            clamp((a.severity * mult) / max_vuln)
         )
 
 
@@ -1340,8 +1350,8 @@ def process_run(run_file, plot=None, pp=None, export=False):
 
         print(
             f"{a.name.capitalize() + ' like':<16} -> "
-            f"Vulnerability: {a.v/a.vmax*100:6.2f}%, "
-            f"Severity: {a.severity/a.vmax*100:6.2f}% | "
+            f"Vulnerability: {clamp(a.v/a.vmax)*100:6.2f}%, "
+            f"Severity: {clamp(a.severity/a.vmax)*100:6.2f}% | "
             f"Features: [{a.breakdown_str()}]"
         )
 
@@ -1350,8 +1360,8 @@ def process_run(run_file, plot=None, pp=None, export=False):
     total_sev  = sum(normalize(a)[1] for a in attacks.values())
 
     print("\n=== Overall ===")
-    print(f"Overall Vulnerability: {total_vuln*100:.2f}%")
-    print(f"Overall Severity:     {total_sev*100:.2f}%")
+    print(f"Overall Vulnerability: {clamp(total_vuln)*100:.2f}%")
+    print(f"Overall Severity:     {clamp(total_sev)*100:.2f}%")
 
     def export_attacks_csv(csv_file):
         with open(csv_file, "w", newline="") as f:
@@ -1373,7 +1383,7 @@ def process_run(run_file, plot=None, pp=None, export=False):
             for a in attacks.values():
                 # Features: pad names and values separately
                 features_str = ", ".join(
-                    f"{fname.ljust(max_feat_name_len)}: {feat['value']*100:6.2f}%"
+                    f"{fname.ljust(max_feat_name_len)}: {clamp(feat['value'])*100:6.2f}%"
                     for fname, feat in a.features.items()
                 )
 
@@ -1386,8 +1396,8 @@ def process_run(run_file, plot=None, pp=None, export=False):
 
                 row = [
                     a.name,
-                    f"{a.v / a.vmax * 100:6.2f}%",
-                    f"{a.severity / a.vmax * 100:6.2f}%",
+                    f"{clamp(a.v / a.vmax) * 100:6.2f}%",
+                    f"{clamp(a.severity / a.vmax) * 100:6.2f}%",
                     features_str,
                     multipliers_str
                 ]
@@ -1422,12 +1432,14 @@ def process_run(run_file, plot=None, pp=None, export=False):
                     "Vulnerability",
                     "Breakdown attacchi",
                 ])
+            else:
+                writer.writerow([])
 
             attack_rows = []
             for a in attacks.values():
                 feat_parts = []
                 for fname, feat in a.features.items():
-                    val_str = f"{feat['value']*100:.2f}%"
+                    val_str = f"{clamp(feat['value'])*100:.2f}%"
                     if feat["present"]:
                         feat_parts.append(f"{fname} : {val_str}")
                     else:
@@ -1436,7 +1448,7 @@ def process_run(run_file, plot=None, pp=None, export=False):
 
                 attack_rows.append([
                     a.name,
-                    f"{a.v / a.vmax * 100:.2f}%",
+                    f"{clamp(a.v / a.vmax) * 100:.2f}%",
                     breakdown,
                 ])
 
@@ -1456,7 +1468,7 @@ def process_run(run_file, plot=None, pp=None, export=False):
                     test_enum, sev = feature_items[i]
                     row[1] = feature_is_mitigated(test_name_base, test_enum)
                     row[2] = sev.label
-                    row[3] = f"{sev.value * 100:.2f}%"
+                    row[3] = f"{clamp(sev.value) * 100:.2f}%"
                     row[4] = compute_priv(test_enum, sev.value) if test_enum != Test.OVERALL else agg_priv
 
                 if i < len(attack_rows):

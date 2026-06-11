@@ -10,20 +10,39 @@
 AS_RESULT(stl_forward_result_t);
 
 #ifdef TARGET_X86_64
+
 #ifdef MITIGATE
+
+#ifdef __SERIALIZE__
+#define SER "serialize;\n"
+#define ARGS
+#define clobbers "rdx", "memory"
+
+#else
+
+#define SER "cpuid;\n"
+#define ARGS "+a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
+#define clobbers "memory"
+#endif
+
 #define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "serialize;\n"                                                               \
-  "mov %%rdx, (%0);\n"                                                         \
-  "serialize;\n"
+  "mov %%rdx, (%0);\n" SER
 #else
+
+#define ARGS
+#define clobbers "rdx", "memory"
+
 #define stl_test                                                               \
   "mov (%1), %%edx;\n"                                                         \
   "mov %%rdx, (%0);\n"
 #endif
 
-#define clobbers "rdx", "memory"
 #elif TARGET_RISCV
+
+#define ARGS
+
 #ifdef MITIGATE
 #define stl_test                                                               \
   "lw t0, 0(%1)\n"                                                             \
@@ -41,7 +60,9 @@ AS_RESULT(stl_forward_result_t);
 #define clobbers "t0", "memory"
 #endif
 
-#define stl_test10 stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test
+#define stl_test10                                                             \
+  stl_test stl_test stl_test stl_test stl_test stl_test stl_test stl_test      \
+      stl_test stl_test
 
 void func(request_dependencies_t *args) {
   char *p = (char *)alloc(4096); // TODO: Swap with page size
@@ -59,9 +80,10 @@ void func(request_dependencies_t *args) {
         memory_barrier();
 
         volatile u64 start = get_cycle();
+        register unsigned int eax = 0, ebx, ecx, edx;
         __asm__ __volatile__(
             stl_test10
-            :
+            : ARGS
             : "r"((unsigned long long *)(p_align + o2)), // %0 (dest, 8-byte)
               "r"((unsigned *)(p_align + o1))            // %1 (src, 4-byte)
             : clobbers);

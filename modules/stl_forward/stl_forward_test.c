@@ -13,22 +13,28 @@ AS_RESULT(stl_forward_result_t);
 
 #ifdef MITIGATE
 
-#ifdef __SERIALIZE__
+#ifndef __SERIALIZE__
 #define SER "serialize;\n"
 #define ARGS
-#define clobbers "rdx", "memory"
+#define clobbers "r8", "memory"
 
 #else
 
-#define SER "cpuid;\n"
+#define SER                                                                    \
+  "push %%rax;\n\t"                                                            \
+  "push %%rbx;\n\t"                                                            \
+  "push %%rcx;\n\t"                                                            \
+  "push %%rdx;\n\t"                                                            \
+  "cpuid;\n\t"                                                                 \
+  "pop %%rdx;\n\t"                                                             \
+  "pop %%rcx;\n\t"                                                             \
+  "pop %%rbx;\n\t"                                                             \
+  "pop %%rax;\n\t"
 #define ARGS "+a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx)
-#define clobbers "memory"
+#define clobbers "r8", "memory"
 #endif
 
-#define stl_test                                                               \
-  "mov (%[src]), %%edx;\n"                                                     \
-  "serialize;\n"                                                               \
-  "mov %%rdx, (%[dst]);\n" SER
+#define stl_test "mov (%[src]), %%r8d;\n" SER "mov %%r8, (%[dst]);\n" SER
 #else
 
 #define ARGS
@@ -84,8 +90,9 @@ void func(request_dependencies_t *args) {
         __asm__ __volatile__(
             stl_test10
             : ARGS
-            : "r"((unsigned long long *)(p_align + o2)), // %0 (dest, 8-byte)
-              "r"((unsigned *)(p_align + o1))            // %1 (src, 4-byte)
+            : [dst] "r"(
+                  (unsigned long long *)(p_align + o2)), // %0 (dest, 8-byte)
+              [src] "r"((unsigned *)(p_align + o1))      // %1 (src, 4-byte)
             : clobbers);
 
         serialise();

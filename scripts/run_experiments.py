@@ -15,6 +15,7 @@ DEFAULT_CYCLES = "1000000000"
 ORCH = "./orchestrator"
 ANALYZER = "python3 analyzer.py"
 SPECTRE_URL = "https://raw.githubusercontent.com/speed47/spectre-meltdown-checker/master/spectre-meltdown-checker.sh"
+SPECTRE_PATCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "patch.diff")
 
 FEATURES = [
     "cache", "pht", "rob", "lap", "rsb", "simd", "pipeline",
@@ -117,9 +118,24 @@ def run_spectre_checker(saved_dir, dry):
                     print(f"Failed to download checker: {e}")
                     return
 
+    if os.path.exists(SPECTRE_PATCH):
+        print(f"Applying patch from {SPECTRE_PATCH} ...")
+        if dry:
+            print(f"[dry-run] Would run: patch -N -t {checker_path} {SPECTRE_PATCH}")
+        else:
+            try:
+                subprocess.run(
+                    ["patch", "-N", "-t", checker_path, SPECTRE_PATCH],
+                    capture_output=True, text=True, timeout=30
+                )
+            except Exception as e:
+                print(f"Failed to apply patch: {e}")
+                return
+
     if dry:
         print(f"[dry-run] Would run: sudo {checker_path} --batch json")
         print(f"[dry-run] Would run: sudo {checker_path}")
+        print(f"[dry-run] Would run: sudo {checker_path} --vendor-check --no-color --hw-only")
         return
 
     try:
@@ -160,6 +176,27 @@ def run_spectre_checker(saved_dir, dry):
             print("  Unknown:     ", summary.get("UNKNOWN", "?"))
         except json.JSONDecodeError:
             print("  (could not parse JSON)")
+
+    print("\n### VENDOR CHECK ###\n")
+    try:
+        result_vendor = subprocess.run(
+            ["sudo", checker_path, "--vendor-check", "--no-color", "--hw-only"],
+            capture_output=True, text=True, timeout=120
+        )
+    except FileNotFoundError:
+        print(f"Checker script not found at {checker_path}")
+        return
+    except PermissionError:
+        print("Need sudo to run spectre-meltdown-checker")
+        return
+
+    vendor_path = os.path.join(saved_dir, "spectre_vendor_check.txt")
+    with open(vendor_path, "w") as f:
+        f.write(result_vendor.stdout)
+        if result_vendor.stderr:
+            f.write("\n=== STDERR ===\n")
+            f.write(result_vendor.stderr)
+    print(f"Vendor check output saved to {vendor_path}")
 
 
 def run_runner(target, runner, cycles, saved_dir, args):

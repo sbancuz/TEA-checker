@@ -1,0 +1,70 @@
+--- saved/spectre-meltdown-checker.sh	2026-06-11 22:56:27.021221687 +0200
++++ spectre-meltdown-checker.sh	2026-06-11 23:08:41.334900221 +0200
+@@ -73,6 +73,9 @@
+ 
+ 		* Hardware-only mode: $(basename $0) [options] --hw-only
+ 			Only inspect the CPU hardware, and report information and affectedness per vulnerability.
++		* Vendor-check mode:  $(basename $0) [options] --vendor-check
++			Only check whether the CPU vendor reports each vulnerability as affecting your CPU model.
++			Can be combined with --hw-only.
+ 
+ 	Vulnerability selection:
+ 		--variant VARIANT	specify which variant you'd like to check, by default all variants are checked.
+@@ -178,6 +181,7 @@
+ opt_coreos=0
+ opt_arch_prefix=''
+ opt_hw_only=0
++opt_vendor_check=0
+ opt_no_hw=0
+ opt_vmm=-1
+ opt_allow_msr_write=0
+@@ -2212,6 +2216,9 @@
+     elif [ "$1" = "--hw-only" ]; then
+         opt_hw_only=1
+         shift
++    elif [ "$1" = "--vendor-check" ]; then
++        opt_vendor_check=1
++        shift
+     elif [ "$1" = "--no-runtime" ]; then
+         opt_runtime=0
+         shift
+@@ -6109,6 +6116,27 @@
+     done
+ }
+ 
++# Iterate all supported CVEs and display whether the CPU vendor reports the
++# current CPU model as affected (VULN) or not (OK) for each CVE.
++# Unlike check_cpu_vulnerabilities, this outputs full pvulnstatus messages
++# and can be used together with --hw-only.
++check_vendor_status() {
++    local cve
++    pr_info "\033[1;34mCPU vendor affectedness\033[0m"
++    for cve in $g_supported_cve_list; do
++        if ! _is_cve_relevant_arch "$cve"; then
++            pr_debug "vendor-status: skipping $cve (arch tag not relevant)"
++            continue
++        fi
++        if is_cpu_affected "$cve"; then
++            pvulnstatus "$cve" VULN "your CPU vendor reported your CPU model as affected"
++        else
++            pvulnstatus "$cve" OK "your CPU vendor reported your CPU model as not affected"
++        fi
++        pr_info
++    done
++}
++
+ # Detect Red Hat/Canonical backported Spectre mitigations in the kernel binary
+ # Sets: g_redhat_canonical_spectre
+ check_redhat_canonical_spectre() {
+@@ -12754,6 +12782,11 @@
+     pr_info
+ fi
+ 
++if [ "$opt_vendor_check" = 1 ]; then
++    check_vendor_status
++    pr_info
++fi
++
+ # Build JSON system/cpu/microcode sections (after check_cpu has populated cap_* vars and VMM detection)
+ if [ "$opt_batch" = 1 ] && [ "$opt_batch_format" = "json" ]; then
+     _build_json_system

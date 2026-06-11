@@ -26,17 +26,17 @@ AS_RESULT(stl_forward_result_t);
 #endif
 
 #define stl_test                                                               \
-  "mov (%1), %%edx;\n"                                                         \
+  "mov (%[src]), %%edx;\n"                                                     \
   "serialize;\n"                                                               \
-  "mov %%rdx, (%0);\n" SER
+  "mov %%rdx, (%[dst]);\n" SER
 #else
 
 #define ARGS
 #define clobbers "rdx", "memory"
 
 #define stl_test                                                               \
-  "mov (%1), %%edx;\n"                                                         \
-  "mov %%rdx, (%0);\n"
+  "mov (%[src]), %%edx;\n"                                                     \
+  "mov %%rdx, (%[dst]);\n"
 #endif
 
 #elif TARGET_RISCV
@@ -45,16 +45,16 @@ AS_RESULT(stl_forward_result_t);
 
 #ifdef MITIGATE
 #define stl_test                                                               \
-  "lw t0, 0(%1)\n"                                                             \
+  "lw t0, 0(%[src])\n"                                                         \
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"                                                                  \
-  "sd t0, 0(%0)\n"                                                             \
+  "sd t0, 0(%[dst])\n"                                                         \
   "fence iorw, iorw\n"                                                         \
   "fence.i\n"
 #else
 #define stl_test                                                               \
-  "lw t0, 0(%1)\n"                                                             \
-  "sd t0, 0(%0)\n"
+  "lw t0, 0(%[src])\n"                                                         \
+  "sd t0, 0(%[dst])\n"
 #endif
 
 #define clobbers "t0", "memory"

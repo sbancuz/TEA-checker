@@ -1,0 +1,9 @@
+{
+  "test_file": "process_tlb_test",
+  "sources": [],
+  "depends_on": [
+    "cache",
+    "tlb"
+  ],
+  "run_as_exe": true
+}

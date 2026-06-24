@@ -1,0 +1,5 @@
+{
+  "test_file" : "ooo_mem_access_test",
+  "sources" : [],
+  "depends_on" : ["cache", "o3"]
+}

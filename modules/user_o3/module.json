@@ -1,0 +1,9 @@
+{
+  "test_file": "user_o3_test",
+  "sources": [],
+  "depends_on": [
+    "cache",
+    "ooo_mem_access"
+  ],
+  "run_as_exe": true
+}

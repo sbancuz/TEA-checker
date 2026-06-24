@@ -1,0 +1,5 @@
+{
+  "test_file" : "stl_forward_test",
+  "sources" : [],
+  "depends_on" : ["cache"]
+}

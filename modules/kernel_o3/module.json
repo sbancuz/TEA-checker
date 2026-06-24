@@ -1,0 +1,9 @@
+{
+  "test_file": "kernel_o3_test",
+  "sources": [],
+  "depends_on": [
+    "cache",
+    "o3"
+  ],
+  "run_as_exe": true
+}

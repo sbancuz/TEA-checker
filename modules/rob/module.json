@@ -1,0 +1,6 @@
+{
+  "test_file" : "rob_test",
+  "sources" : [],
+  "depends_on" : [],
+  "run_as_exe": true
+}

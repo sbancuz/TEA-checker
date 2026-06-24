@@ -1,0 +1,6 @@
+{
+  "test_file" : "user_stale_code_test",
+  "sources" : [],
+  "depends_on" : ["cache", "stale_code_execution"],
+  "run_as_exe": true
+}

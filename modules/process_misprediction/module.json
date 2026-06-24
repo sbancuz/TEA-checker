@@ -1,0 +1,9 @@
+{
+  "test_file": "process_misprediction_test",
+  "sources": [],
+  "depends_on": [
+    "cache",
+    "pht"
+  ],
+  "run_as_exe": true
+}

@@ -1,0 +1,9 @@
+{
+  "test_file": "process_lap_test",
+  "sources": [],
+  "depends_on": [
+    "cache",
+    "lap"
+  ],
+  "run_as_exe": true
+}

@@ -1,0 +1,5 @@
+#ifndef _TEST_NAME
+#define _TEST_NAME
+#define TEST_NAME pipeline
+#define TEST_NAME_STR "pipeline"
+#endif // _TEST_NAME
